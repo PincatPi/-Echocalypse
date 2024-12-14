@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
@@ -27,7 +28,7 @@ public class ThirdPersonController : MonoBehaviour
         Jumping,
         Landing,
     }
-    [HideInInspector]
+    //[HideInInspector]
     public PlayerPosture playerPosture = PlayerPosture.Stand;
     
     #region 动画状态机阈值
@@ -60,9 +61,9 @@ public class ThirdPersonController : MonoBehaviour
     
     #region 角色速度
     
-    float crouchSpeed = 1.1f;
-    float walkSpeed = 1.5f;
-    float runSpeed = 5.2f;
+    float crouchSpeed = 0.8f;
+    float walkSpeed = 1.27f;
+    float runSpeed = 4.2f;
     
     #endregion
     
@@ -74,10 +75,10 @@ public class ThirdPersonController : MonoBehaviour
     #region 角色状态
     
     //角色状态输入
-    private bool isRunning = false;
-    private bool isCrouch = false;
-    private bool isAiming = false;
-    private bool isJumping = false;
+    private bool isRunPressed = false;
+    private bool isCrouchPressed = false;
+    private bool isAimPressed = false;
+    private bool isJumpPressed = false;
     
     #endregion
     
@@ -108,7 +109,7 @@ public class ThirdPersonController : MonoBehaviour
     //平均速度变量
     private Vector3 averageVelocity = Vector3.zero;
     //下坠时的加速度是上升时加速度的倍数
-    private float fallMultiplier = 1.5f;
+    public float fallMultiplier = 1.5f;
     //角色是否落地
     [SerializeField]
     private bool isGrounded;
@@ -128,6 +129,8 @@ public class ThirdPersonController : MonoBehaviour
     private bool couldFall = false;
     //角色跌落的最小高度，小于此高度则不会切换到跌落姿态
     private float fallHeight = 0.5f;
+    //角色跌落时，能够被判定为Landing状态的最小速度
+    private float landdingMinVelocity;
     
     #endregion
 
@@ -155,6 +158,10 @@ public class ThirdPersonController : MonoBehaviour
         
         //锁定鼠标
         Cursor.lockState = CursorLockMode.Locked;
+        
+        //根据最小的跌落高度来计算落地CD速度的阈值（绝对值低于该速度则不计算落地CD）
+        landdingMinVelocity = -Mathf.Sqrt(-2 * gravity * fallHeight);
+        landdingMinVelocity -= 1f;
     }
 
     void Update()
@@ -182,6 +189,101 @@ public class ThirdPersonController : MonoBehaviour
     /// </summary>
     private void SwitchPlayerStates()
     {
+        switch (playerPosture)
+        {
+            case PlayerPosture.Stand:
+                //垂直速度大于0，说明此时为跳跃状态
+                if (verticalVelocity > 0)
+                {
+                    playerPosture = PlayerPosture.Jumping;
+                }
+                //站立状态下跌落
+                else if (!isGrounded && couldFall)
+                {
+                    playerPosture = PlayerPosture.Falling;
+                }
+                else if (isCrouchPressed)
+                {
+                    playerPosture = PlayerPosture.Crouch;
+                }
+                break;
+            
+            case PlayerPosture.Crouch:
+                //从下蹲状态跌落
+                if (!isGrounded && couldFall)
+                {
+                    playerPosture = PlayerPosture.Falling;
+                }
+                else if (!isCrouchPressed)
+                {
+                    playerPosture = PlayerPosture.Stand;
+                }
+                break;
+            //坠落状态下
+            case PlayerPosture.Falling:
+                //落地
+                //TODO: 有没有比判断当前垂直速度更好的方法，来预防角色在墙体边缘可能出现的卡Landing状态的情况
+                if (verticalVelocity <= landdingMinVelocity && isGrounded)
+                {
+                    //计算跳跃冷却时间=
+                    StartCoroutine(CoolDownJump());
+                }
+                //冷却状态
+                if (isLanding)
+                {
+                    playerPosture = PlayerPosture.Landing;
+                }
+                break;
+            //跳跃状态下
+            case PlayerPosture.Jumping:
+                //落地
+                if (verticalVelocity < 0 && isGrounded)
+                {
+                    //计算跳跃冷却时间
+                    StartCoroutine(CoolDownJump());
+                }
+                //落地冷却状态
+                if (isLanding)
+                {
+                    playerPosture = PlayerPosture.Landing;
+                }
+                break;
+            //落地冷却状态
+            case PlayerPosture.Landing:
+                //落地冷却状态下，设为站立姿态，保证此状态下玩家能够行走
+                if (!isLanding)
+                {
+                    playerPosture = PlayerPosture.Stand;
+                }
+                break;
+        }
+        
+        //玩家输入
+        if (moveInput.magnitude == 0)
+        {
+            locomotionState = LocomotionState.Idle;
+        }
+        else if(isRunPressed)
+        {
+            locomotionState = LocomotionState.Run;
+        }
+        else
+        {
+            locomotionState = LocomotionState.Walk;
+        }
+        
+        //瞄准
+        if (isAimPressed)
+        {
+            armState = ArmState.Aim;
+        }
+        else
+        {
+            armState = ArmState.Normal;
+        }
+        
+        //----------------------------------------------
+        /*
         //空中
         if (!isGrounded)
         {
@@ -210,7 +312,7 @@ public class ThirdPersonController : MonoBehaviour
             playerPosture = PlayerPosture.Landing;
         }
         //下蹲
-        else if (isCrouch)
+        else if (isCrouchPressed)
         {
             playerPosture = PlayerPosture.Crouch;
         }
@@ -225,7 +327,7 @@ public class ThirdPersonController : MonoBehaviour
         {
             locomotionState = LocomotionState.Idle;
         }
-        else if(isRunning)
+        else if(isRunPressed)
         {
             locomotionState = LocomotionState.Run;
         }
@@ -235,7 +337,7 @@ public class ThirdPersonController : MonoBehaviour
         }
         
         //瞄准
-        if (isAiming)
+        if (isAimPressed)
         {
             armState = ArmState.Aim;
         }
@@ -243,6 +345,7 @@ public class ThirdPersonController : MonoBehaviour
         {
             armState = ArmState.Normal;
         }
+        */
     }
 
     /// <summary>
@@ -257,8 +360,10 @@ public class ThirdPersonController : MonoBehaviour
         //限制landingThreshold在[-0.5, 0]
         landingThreshold /= 20f;
         //将landingThreshold变为[0.5, 1]
-        landingThreshold += 1f;
+        //TEST: 将landingThreshold变为[0, 0.5]
+        landingThreshold = 0f;
         isLanding = true;
+        
         playerPosture = PlayerPosture.Landing;
         //等待CD时间后
         yield return new WaitForSeconds(jumpCD);
@@ -350,7 +455,8 @@ public class ThirdPersonController : MonoBehaviour
         else if (playerPosture == PlayerPosture.Falling)
         {
             //线性插值地改变动画状态机中的Posture为Midair值
-            animator.SetFloat(postureHash, midairThreshold, 0.1f, Time.deltaTime);
+            //TODO:检查此处的dampTime是否有问题
+            animator.SetFloat(postureHash, midairThreshold, 0.4f, Time.deltaTime);
             //设置状态机中VerticalSpeed的值
             animator.SetFloat(verticalSpeedHash, verticalVelocity, 0.1f, Time.deltaTime);
             //TODO:检查此处的footTween是否正确
@@ -374,8 +480,8 @@ public class ThirdPersonController : MonoBehaviour
     /// </summary>
     private void Jump()
     {
-        //若当前角色姿态为站立或下蹲，且按下了跳跃键
-        if ((playerPosture == PlayerPosture.Stand || playerPosture == PlayerPosture.Crouch) && isJumping)
+        //若当前角色姿态为站立或下蹲，且按下了跳跃键，且角色竖直速度小于一个阈值（为防止按下跳跃后角色还没进入Jump状态时，该部分代码被重复执行）
+        if ((playerPosture == PlayerPosture.Stand || playerPosture == PlayerPosture.Crouch) && isJumpPressed && verticalVelocity < 2f)
         {
             //播放跳跃音效
             playerSoundController.PlayJumpEffortSound();
@@ -497,7 +603,7 @@ public class ThirdPersonController : MonoBehaviour
             //上升时
             else
             {
-                if (isJumping)
+                if (isJumpPressed)
                 {
                     verticalVelocity += gravity * Time.deltaTime;
                 }
@@ -516,15 +622,16 @@ public class ThirdPersonController : MonoBehaviour
     private void CheckGrounded()
     {
         //射线检测到了碰撞体
-        //TEST: 1.2f个characterController.skinWidth的距离不会引起误判
+        //TODO: 1.5f个characterController.skinWidth的距离不会引起误判
         if (Physics.SphereCast(playerTransform.position + (Vector3.up * groundCheckOffset), characterController.radius,
                 Vector3.down, out RaycastHit hit,
-                groundCheckOffset - characterController.radius + 1.1f * characterController.skinWidth))
+                groundCheckOffset - characterController.radius + 1.5f * characterController.skinWidth))
         {
             //碰撞体是地面
             if (hit.collider.gameObject.CompareTag("Ground"))
             {
                 isGrounded = true;
+                couldFall = false;
             }
         }
         //未检测到碰撞体
@@ -560,6 +667,14 @@ public class ThirdPersonController : MonoBehaviour
             }
         }
     }
+
+    private void OnDrawGizmos()
+    {
+        //TEST: 绘制检测范围
+        // Gizmos.color = Color.green;
+        // Gizmos.DrawWireSphere(playerTransform.position + (Vector3.up * groundCheckOffset), characterController.radius);
+        // Gizmos.DrawLine(playerTransform.position + (Vector3.up * groundCheckOffset), Vector3.down * (groundCheckOffset - characterController.radius + 1.5f * characterController.skinWidth));
+    }
     
     #region 玩家输入相关
     
@@ -571,25 +686,25 @@ public class ThirdPersonController : MonoBehaviour
     //获取玩家奔跑状态输入
     public void GetRunInput(InputAction.CallbackContext ctx)
     {
-        isRunning = ctx.ReadValueAsButton();
+        isRunPressed = ctx.ReadValueAsButton();
     }
     //获取玩家下蹲状态输入
     public void GetCrouchInput(InputAction.CallbackContext ctx)
     {
         if (ctx.started)
         {
-            isCrouch = !isCrouch;
+            isCrouchPressed = !isCrouchPressed;
         }
     }
     //获取玩家瞄准状态输入
     public void GetAimInput(InputAction.CallbackContext ctx)
     {
-        isAiming = ctx.ReadValueAsButton();
+        isAimPressed = ctx.ReadValueAsButton();
     }
     //获取玩家跳跃输入
     public void GetJumpInput(InputAction.CallbackContext ctx)
     {
-        isJumping = ctx.ReadValueAsButton();
+        isJumpPressed = ctx.ReadValueAsButton();
     }
     
     #endregion

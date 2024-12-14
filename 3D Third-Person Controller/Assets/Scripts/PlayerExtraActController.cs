@@ -10,6 +10,7 @@ public class PlayerExtraActController : MonoBehaviour
 
     private ThirdPersonController thirdPersonController;
     private Animator animator;
+    private PlayerAudioController playerAudioController;
     
     #endregion
     
@@ -37,6 +38,7 @@ public class PlayerExtraActController : MonoBehaviour
     {
         thirdPersonController = GetComponent<ThirdPersonController>();
         animator = thirdPersonController.gameObject.GetComponent<Animator>();
+        playerAudioController = GetComponent<PlayerAudioController>();
         
         extraActHash = Animator.StringToHash("ExtraAct");
     }
@@ -106,6 +108,7 @@ public class PlayerExtraActController : MonoBehaviour
         {
             isGreet = true;
             isEmpty = false;
+            playerAudioController.PlayGreetAudio();
         }
     }
     //获取玩家Agree输入
@@ -117,6 +120,7 @@ public class PlayerExtraActController : MonoBehaviour
         {
             isAgree = true;
             isEmpty = false;
+            playerAudioController.PlayAgreeAudio();
         }
     }
 
