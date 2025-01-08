@@ -6,6 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
+using UnityEngine.Animations.Rigging;
 
 public class ThirdPersonController : MonoBehaviour
 {
@@ -49,15 +50,25 @@ public class ThirdPersonController : MonoBehaviour
     }
     [HideInInspector]
     public LocomotionState locomotionState = LocomotionState.Idle;
+   
+    #region 角色手持装备
     
     //角色手持装备状态枚举
     public enum ArmState
     {
-        Normal,
-        Aim,
+        Normal = 0,
+        Equip = 1,
     }
     [HideInInspector]
     public ArmState armState = ArmState.Normal;
+
+    public GameObject weaponOnBack;
+    public GameObject weaponInHand;
+    
+    public TwoBoneIKConstraint rightHandIKConstraint;
+    
+    #endregion
+    
     
     #region 角色速度
     
@@ -77,7 +88,7 @@ public class ThirdPersonController : MonoBehaviour
     //角色状态输入
     private bool isRunPressed = false;
     private bool isCrouchPressed = false;
-    private bool isAimPressed = false;
+    private bool isEquipPressed = false;
     private bool isJumpPressed = false;
     
     #endregion
@@ -89,6 +100,7 @@ public class ThirdPersonController : MonoBehaviour
     private int turnSpeedHash;
     private int verticalSpeedHash;
     private int jumpTypeHash;
+    private int equipHash;
     
     #endregion
     
@@ -155,6 +167,7 @@ public class ThirdPersonController : MonoBehaviour
         turnSpeedHash = Animator.StringToHash("TurnSpeed");
         verticalSpeedHash = Animator.StringToHash("VerticalSpeed");
         jumpTypeHash = Animator.StringToHash("JumpType");
+        equipHash = Animator.StringToHash("Equip");
         
         //锁定鼠标
         Cursor.lockState = CursorLockMode.Locked;
@@ -189,6 +202,7 @@ public class ThirdPersonController : MonoBehaviour
     /// </summary>
     private void SwitchPlayerStates()
     {
+        //玩家姿态
         switch (playerPosture)
         {
             case PlayerPosture.Stand:
@@ -258,6 +272,16 @@ public class ThirdPersonController : MonoBehaviour
                 break;
         }
         
+        //装备状态
+        if (!isEquipPressed)
+        {
+            armState = ArmState.Normal;
+        }
+        else
+        {
+            armState = ArmState.Equip;
+        }
+        
         //玩家输入
         if (moveInput.magnitude == 0)
         {
@@ -271,83 +295,9 @@ public class ThirdPersonController : MonoBehaviour
         {
             locomotionState = LocomotionState.Walk;
         }
-        
-        //瞄准
-        if (isAimPressed)
-        {
-            armState = ArmState.Aim;
-        }
-        else
-        {
-            armState = ArmState.Normal;
-        }
-        
-        //----------------------------------------------
-        /*
-        //空中
-        if (!isGrounded)
-        {
-            //垂直速度大于零，说明玩家处于跳跃状态
-            if (verticalVelocity > 0)
-            {
-                playerPosture = PlayerPosture.Jumping;
-            }
-            //玩家不处于跳跃状态
-            else if (playerPosture != PlayerPosture.Jumping)
-            {
-                if (couldFall)
-                {
-                    playerPosture = PlayerPosture.Falling;
-                }
-            }
-        }
-        //判断上一帧玩家是否仍处于滞空姿态，若playerPosture==PlayerPosture.Midair则上一帧仍处于滞空
-        else if (playerPosture == PlayerPosture.Jumping)
-        {
-            StartCoroutine(CoolDownJump());
-        }
-        //处于CD状态
-        else if (isLanding)
-        {
-            playerPosture = PlayerPosture.Landing;
-        }
-        //下蹲
-        else if (isCrouchPressed)
-        {
-            playerPosture = PlayerPosture.Crouch;
-        }
-        //站立
-        else
-        {
-            playerPosture = PlayerPosture.Stand;
-        }
-
-        //玩家输入
-        if (moveInput.magnitude == 0)
-        {
-            locomotionState = LocomotionState.Idle;
-        }
-        else if(isRunPressed)
-        {
-            locomotionState = LocomotionState.Run;
-        }
-        else
-        {
-            locomotionState = LocomotionState.Walk;
-        }
-        
-        //瞄准
-        if (isAimPressed)
-        {
-            armState = ArmState.Aim;
-        }
-        else
-        {
-            armState = ArmState.Normal;
-        }
-        */
     }
 
+    
     /// <summary>
     /// 用于计算跳跃cd时间的协程函数
     /// </summary>
@@ -391,6 +341,11 @@ public class ThirdPersonController : MonoBehaviour
     /// </summary>
     private void SetupAnimator()
     {
+        //装备状态
+        animator.SetBool(equipHash, isEquipPressed);
+        //控制掏出武器和收起武器时的右手IK权重
+        rightHandIKConstraint.weight = animator.GetFloat("Right Hand Weight");
+        
         //站立状态
         if (playerPosture == PlayerPosture.Stand)
         {
@@ -668,12 +623,15 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
+    /// <summary>
+    /// 切换背部武器和手部武器的显示
+    /// </summary>
+    /// <param name="weaponPosition">表示武器的位置是在背上0还是手上1</param>
+    public void PutGrabWeapon(int weaponPosition)
     {
-        //TEST: 绘制检测范围
-        // Gizmos.color = Color.green;
-        // Gizmos.DrawWireSphere(playerTransform.position + (Vector3.up * groundCheckOffset), characterController.radius);
-        // Gizmos.DrawLine(playerTransform.position + (Vector3.up * groundCheckOffset), Vector3.down * (groundCheckOffset - characterController.radius + 1.5f * characterController.skinWidth));
+        bool onBack = (weaponPosition != (int)ArmState.Equip);
+        weaponOnBack.SetActive(onBack);
+        weaponInHand.SetActive(!onBack);
     }
     
     #region 玩家输入相关
@@ -696,10 +654,13 @@ public class ThirdPersonController : MonoBehaviour
             isCrouchPressed = !isCrouchPressed;
         }
     }
-    //获取玩家瞄准状态输入
-    public void GetAimInput(InputAction.CallbackContext ctx)
+    //获取玩家装备武器状态输入
+    public void GetEquipInput(InputAction.CallbackContext ctx)
     {
-        isAimPressed = ctx.ReadValueAsButton();
+        if (ctx.started)
+        {
+            isEquipPressed = !isEquipPressed;
+        }
     }
     //获取玩家跳跃输入
     public void GetJumpInput(InputAction.CallbackContext ctx)
