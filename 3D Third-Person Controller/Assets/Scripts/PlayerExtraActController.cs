@@ -99,12 +99,21 @@ public class PlayerExtraActController : MonoBehaviour
     
     #region 玩家输入相关
 
+    private bool IsValidState()
+    {
+        if (isEmpty && thirdPersonController.playerPosture == ThirdPersonController.PlayerPosture.Stand &&
+            thirdPersonController.locomotionState == ThirdPersonController.LocomotionState.Idle &&
+            thirdPersonController.armState == ThirdPersonController.ArmState.Normal)
+        {
+            return true;
+        }
+        return false;
+    }
+
     //获取玩家Greet输入
     public void GetGreetInput(InputAction.CallbackContext ctx)
     {
-        if (ctx.started && isEmpty && 
-            thirdPersonController.playerPosture == ThirdPersonController.PlayerPosture.Stand &&
-            thirdPersonController.locomotionState == ThirdPersonController.LocomotionState.Idle)
+        if (ctx.started && IsValidState())
         {
             isGreet = true;
             isEmpty = false;
@@ -114,9 +123,7 @@ public class PlayerExtraActController : MonoBehaviour
     //获取玩家Agree输入
     public void GetAgreeInput(InputAction.CallbackContext ctx)
     {
-        if (ctx.started && isEmpty && 
-            thirdPersonController.playerPosture == ThirdPersonController.PlayerPosture.Stand &&
-            thirdPersonController.locomotionState == ThirdPersonController.LocomotionState.Idle)
+        if (ctx.started && IsValidState())
         {
             isAgree = true;
             isEmpty = false;
