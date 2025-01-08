@@ -526,6 +526,13 @@ ModelImporter:
           postInfinity: 3
           rotationOrder: 4
       events:
+      - time: 0.22395112
+        functionName: PlayUnEquipSound
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       - time: 0.65755
         functionName: PutGrabWeapon
         data: 

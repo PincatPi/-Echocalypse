@@ -7,9 +7,13 @@ using UnityEngine;
 public class PlayerSoundController : MonoBehaviour
 {
     private AudioSource audioSource;
+    
     public AudioClip[] footSteps;
     public AudioClip[] jumpEfforts;
     public AudioClip[] landing;
+    public AudioClip equip;
+    public AudioClip unEquip;
+    public AudioClip[] commonAttack;
     
     void Start()
     {
@@ -32,5 +36,20 @@ public class PlayerSoundController : MonoBehaviour
     {
         int i = Random.Range(0, landing.Length);
         audioSource.PlayOneShot(landing[i]);
+    }
+
+    public void PlayEquipSound()
+    {
+        audioSource.PlayOneShot(equip);
+    }
+
+    public void PlayUnEquipSound()
+    {
+        audioSource.PlayOneShot(unEquip);
+    }
+
+    public void PlayCommonAttackSound(int currentAttack)
+    {
+        audioSource.PlayOneShot(commonAttack[currentAttack - 1]);
     }
 }
