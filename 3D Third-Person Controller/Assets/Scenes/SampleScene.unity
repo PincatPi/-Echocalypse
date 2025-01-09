@@ -2420,9 +2420,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 92345746}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.079244465, y: -0.000000017680158, z: 0.0000000014054746,
-    w: 0.9968552}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0.28977984, y: 0.0000000014369679, z: 4.3507176e-10, w: 0.95709336}
+  m_LocalPosition: {x: 0, y: -1.3999895, z: 0.99998605}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8426,8 +8425,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.099451914, y: -0.000000038283893, z: 0.0000000038263757,
-    w: 0.99504244}
+  m_LocalRotation: {x: 0.09945191, y: -0.000000030567236, z: 0.0000000030551157, w: 0.99504244}
   m_LocalPosition: {x: -1.69, y: 2.526, z: -2.296}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -24424,6 +24422,7 @@ MonoBehaviour:
   equip: {fileID: 0}
   unEquip: {fileID: 0}
   commonAttack: []
+  playerCommonAttack: []
 --- !u!82 &811913017
 AudioSource:
   m_ObjectHideFlags: 0
@@ -26725,7 +26724,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 855427968}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.1360898, y: -0, z: -0, w: 0.99069655}
+  m_LocalRotation: {x: 0.13608985, y: 0.000000011277567, z: -0.0000000015491748, w: 0.99069655}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -34798,6 +34797,7 @@ MonoBehaviour:
   equip: {fileID: 0}
   unEquip: {fileID: 0}
   commonAttack: []
+  playerCommonAttack: []
 --- !u!82 &1155446025
 AudioSource:
   m_ObjectHideFlags: 0
@@ -38412,8 +38412,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1326575442}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.099451885, y: -0.000000019141945, z: 0.0000000019131874,
-    w: 0.9950424}
+  m_LocalRotation: {x: 0.09945188, y: -2.9325226e-16, z: -2.1314668e-16, w: 0.9950424}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -72303,7 +72302,7 @@ PrefabInstance:
     - target: {fileID: 2455654995497583277, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
         type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3040040603839711841, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
         type: 3}
@@ -72455,6 +72454,121 @@ PrefabInstance:
       propertyPath: commonAttack.Array.data[3]
       value: 
       objectReference: {fileID: 8300000, guid: d57c379dc55dddb41ae121ce6c62cca1, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.size
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[0]
+      value: 
+      objectReference: {fileID: 8300000, guid: e10afb7f80ff8e049a7b1d65f56d8590, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[1]
+      value: 
+      objectReference: {fileID: 8300000, guid: fc5fb30c8291dec4f82214622839cf07, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[2]
+      value: 
+      objectReference: {fileID: 8300000, guid: df3f392eb6a33a9429d57b9e287e5f10, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[3]
+      value: 
+      objectReference: {fileID: 8300000, guid: 380a580cec39e304288b47d0ca799d6a, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[4]
+      value: 
+      objectReference: {fileID: 8300000, guid: 550836fc9759d2249ad74bd68a1ef48d, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[5]
+      value: 
+      objectReference: {fileID: 8300000, guid: 3521673a03f6e824b92da83319406cfe, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[6]
+      value: 
+      objectReference: {fileID: 8300000, guid: 5211dd1bf95a91e4997d03b8de4dfbbf, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[7]
+      value: 
+      objectReference: {fileID: 8300000, guid: c208bc69babdbf14886a99dc8c7644af, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[8]
+      value: 
+      objectReference: {fileID: 8300000, guid: c4dba194ecf6ca84b8ba98c828aa21f3, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[9]
+      value: 
+      objectReference: {fileID: 8300000, guid: a748014624985bb4d9308b3de295d307, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[10]
+      value: 
+      objectReference: {fileID: 8300000, guid: 1d94339c3986ed7469593f2dc0082559, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[11]
+      value: 
+      objectReference: {fileID: 8300000, guid: e10afb7f80ff8e049a7b1d65f56d8590, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[12]
+      value: 
+      objectReference: {fileID: 8300000, guid: fc5fb30c8291dec4f82214622839cf07, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[13]
+      value: 
+      objectReference: {fileID: 8300000, guid: df3f392eb6a33a9429d57b9e287e5f10, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[14]
+      value: 
+      objectReference: {fileID: 8300000, guid: 380a580cec39e304288b47d0ca799d6a, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[15]
+      value: 
+      objectReference: {fileID: 8300000, guid: 550836fc9759d2249ad74bd68a1ef48d, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[16]
+      value: 
+      objectReference: {fileID: 8300000, guid: 3521673a03f6e824b92da83319406cfe, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[17]
+      value: 
+      objectReference: {fileID: 8300000, guid: 5211dd1bf95a91e4997d03b8de4dfbbf, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[18]
+      value: 
+      objectReference: {fileID: 8300000, guid: c208bc69babdbf14886a99dc8c7644af, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[19]
+      value: 
+      objectReference: {fileID: 8300000, guid: c4dba194ecf6ca84b8ba98c828aa21f3, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[20]
+      value: 
+      objectReference: {fileID: 8300000, guid: a748014624985bb4d9308b3de295d307, type: 3}
+    - target: {fileID: 7196677513345993101, guid: 2e2060c2dcf9ee2498c90f0a9fe6848c,
+        type: 3}
+      propertyPath: playerCommonAttack.Array.data[21]
+      value: 
+      objectReference: {fileID: 8300000, guid: 1d94339c3986ed7469593f2dc0082559, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

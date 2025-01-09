@@ -526,7 +526,7 @@ ModelImporter:
           postInfinity: 3
           rotationOrder: 4
       events:
-      - time: 0.22395112
+      - time: 0.18354708
         functionName: PlayUnEquipSound
         data: 
         objectReferenceParameter: {instanceID: 0}

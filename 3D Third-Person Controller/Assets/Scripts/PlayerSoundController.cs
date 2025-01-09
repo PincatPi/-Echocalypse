@@ -14,6 +14,7 @@ public class PlayerSoundController : MonoBehaviour
     public AudioClip equip;
     public AudioClip unEquip;
     public AudioClip[] commonAttack;
+    public AudioClip[] playerCommonAttack;
     
     void Start()
     {
@@ -51,5 +52,24 @@ public class PlayerSoundController : MonoBehaviour
     public void PlayCommonAttackSound(int currentAttack)
     {
         audioSource.PlayOneShot(commonAttack[currentAttack - 1]);
+        PlayPlayerCommonAttackSound(currentAttack);
+    }
+
+    public void PlayPlayerCommonAttackSound(int currentAttack)
+    {
+        int randomIndex = Random.Range(0, playerCommonAttack.Length);
+        //连击第四下（重击）必定播放音效
+        if(currentAttack == 4)
+        {
+            audioSource.PlayOneShot(playerCommonAttack[randomIndex]);
+        }
+        else
+        {
+            //20%的概率播放音效
+            if (Random.Range(0f, 1f) >= 0.2f)
+            {
+                audioSource.PlayOneShot(playerCommonAttack[randomIndex]);
+            }
+        }
     }
 }
