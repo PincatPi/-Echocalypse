@@ -533,7 +533,7 @@ ModelImporter:
         floatParameter: 0
         intParameter: 1
         messageOptions: 0
-      - time: 0.56396407
+      - time: 0.5328222
         functionName: PlayEquipSound
         data: 
         objectReferenceParameter: {instanceID: 0}
