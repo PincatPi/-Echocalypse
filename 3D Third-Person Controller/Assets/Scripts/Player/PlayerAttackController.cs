@@ -39,11 +39,12 @@ public class PlayerAttackController : MonoBehaviour
         GreatSword,
         Bow
     }
-    protected WeaponType weaponType = WeaponType.Empty;
+    private WeaponType weaponType = WeaponType.Empty;
+    private Dictionary<WeaponType, int> comboDic = new Dictionary<WeaponType, int>();
     [SerializeField]
     private int attackCount = 0;
 
-    private readonly float attackTime = 0.3f;
+    private readonly float attackTime = 0.4f;
     [SerializeField]
     private float timeCounter = 0f;
     [SerializeField]
@@ -63,6 +64,10 @@ public class PlayerAttackController : MonoBehaviour
         currentLeftHandIKConstraint = leftHandIKConstraints[0];
         
         equipHash = Animator.StringToHash("WeaponType");
+        
+        //注册当前各种武器对应的Combo数
+        comboDic.Add(WeaponType.Katana, 6);
+        comboDic.Add(WeaponType.GreatSword, 4);
     }
     
     void Update()
@@ -92,6 +97,7 @@ public class PlayerAttackController : MonoBehaviour
     /// <param name="weaponType">表示武器的位置是在背上0还是手上1\2\3</param>
     public void PutGrabWeapon(int weaponType)
     {
+        //isOnBack为true时是装备武器，为false时是收回武器
         bool isOnBack = weaponOnBack[weaponType].activeSelf;
         weaponOnBack[weaponType].SetActive(!isOnBack);
         weaponInHand[weaponType].SetActive(isOnBack);
@@ -163,7 +169,8 @@ public class PlayerAttackController : MonoBehaviour
     {
         if (ctx.started && !stunned)
         {
-            if (weaponType != WeaponType.Katana)
+            //若当前手上没有武器
+            if (weaponType == WeaponType.Empty)
             {
                 weaponType = WeaponType.Katana;
                 thirdPersonController.isEquip = true;
@@ -171,19 +178,19 @@ public class PlayerAttackController : MonoBehaviour
                 currentRightHandIKConstraint = rightHandIKConstraints[(int)WeaponType.Katana];
                 currentLeftHandIKConstraint = leftHandIKConstraints[(int)WeaponType.Katana];
             }
+            //若手上有武器，则收回该武器
             else
             {
                 weaponType = WeaponType.Empty;
                 thirdPersonController.isEquip = false;
             }
         }
-        Debug.Log((int)weaponType);
     }
     public void GetGreatSwordInput(InputAction.CallbackContext ctx)
     {
         if (ctx.started && !stunned)
         {
-            if (weaponType != WeaponType.GreatSword)
+            if (weaponType == WeaponType.Empty)
             {
                 weaponType = WeaponType.GreatSword;
                 thirdPersonController.isEquip = true;
@@ -197,13 +204,12 @@ public class PlayerAttackController : MonoBehaviour
                 thirdPersonController.isEquip = false;
             }
         }
-        Debug.Log((int)weaponType);
     }
     public void GetBowInput(InputAction.CallbackContext ctx)
     {
         if (ctx.started && !stunned)
         {
-            if (weaponType != WeaponType.Bow)
+            if (weaponType == WeaponType.Empty)
             {
                 weaponType = WeaponType.Bow;
                 thirdPersonController.isEquip = true;
@@ -217,7 +223,6 @@ public class PlayerAttackController : MonoBehaviour
                 thirdPersonController.isEquip = false;
             }
         }
-        Debug.Log((int)weaponType);
     }
     
     //获取玩家攻击输入
@@ -225,8 +230,8 @@ public class PlayerAttackController : MonoBehaviour
     {
         if (ctx.started && IsInputValid())
         {
-            //改变连击数，若连击数此时为4则会重置为1
-            attackCount = attackCount < 4 ? attackCount + 1 : 1;
+            //改变连击数，若连击数此时为当前武器普通Combo最大值则会重置为1
+            attackCount = attackCount < comboDic[weaponType] ? attackCount + 1 : 1;
             //阻断攻击输入的接受
             stunned = true;
         }
