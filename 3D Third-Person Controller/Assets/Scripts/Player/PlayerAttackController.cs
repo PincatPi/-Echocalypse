@@ -3,17 +3,23 @@ using System.Collections.Generic;
 using Unity.Burst.Intrinsics;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Interactions;
 using UnityEngine.PlayerLoop;
 
 public class PlayerAttackController : MonoBehaviour
 {
     #region 组件
     
-    public Animator animator;
-    public CharacterController controller;
-    public ThirdPersonController thirdPersonController;
+    private Animator animator;
+    private CharacterController controller;
+    private ThirdPersonController thirdPersonController;
     public Transform effectTransform;
+    public TwoBoneIKConstraint[] rightHandIKConstraints;
+    private TwoBoneIKConstraint currentRightHandIKConstraint;
+    public TwoBoneIKConstraint[] leftHandIKConstraints;
+    private TwoBoneIKConstraint currentLeftHandIKConstraint;
     
     #endregion
 
@@ -26,6 +32,14 @@ public class PlayerAttackController : MonoBehaviour
         Ultimate,
     }
     private AttackType attackType = AttackType.Common;
+    public enum WeaponType
+    {
+        Empty,
+        Katana,
+        GreatSword,
+        Bow
+    }
+    protected WeaponType weaponType = WeaponType.Empty;
     [SerializeField]
     private int attackCount = 0;
 
@@ -33,13 +47,22 @@ public class PlayerAttackController : MonoBehaviour
     [SerializeField]
     private float timeCounter = 0f;
     [SerializeField]
-    private bool stunned = false;
+    public bool stunned = false;
+    
+    public GameObject[] weaponOnBack;
+    public GameObject[] weaponInHand;
+
+    private int equipHash;
     
     void Start()
     {
         animator = GetComponent<Animator>();
         controller = GetComponent<CharacterController>();
         thirdPersonController = GetComponent<ThirdPersonController>();
+        currentRightHandIKConstraint = rightHandIKConstraints[0];
+        currentLeftHandIKConstraint = leftHandIKConstraints[0];
+        
+        equipHash = Animator.StringToHash("WeaponType");
     }
     
     void Update()
@@ -48,9 +71,32 @@ public class PlayerAttackController : MonoBehaviour
         {
             timeCounter -= Time.deltaTime;
         }
+        //设置动画状态
+        SetAnimator();
+        //攻击计数
         CommonAttack();
     }
 
+    private void SetAnimator()
+    {
+        //装备状态
+        animator.SetInteger(equipHash, (int)weaponType);
+        //控制掏出武器和收起武器时的右手IK权重
+        currentRightHandIKConstraint.weight = animator.GetFloat("Right Hand Weight");
+        currentLeftHandIKConstraint.weight = animator.GetFloat("Left Hand Weight");
+    }
+    
+    /// <summary>
+    /// 切换背部武器和手部武器的显示
+    /// </summary>
+    /// <param name="weaponType">表示武器的位置是在背上0还是手上1\2\3</param>
+    public void PutGrabWeapon(int weaponType)
+    {
+        bool isOnBack = weaponOnBack[weaponType].activeSelf;
+        weaponOnBack[weaponType].SetActive(!isOnBack);
+        weaponInHand[weaponType].SetActive(isOnBack);
+    }
+    
     /// <summary>
     /// 普通攻击
     /// </summary>
@@ -98,11 +144,11 @@ public class PlayerAttackController : MonoBehaviour
     }
     
     #endregion
-
+    
     #region 玩家输入相关
     
     //判断是否接收玩家攻击输入
-    private bool IsAttackValid()
+    private bool IsInputValid()
     {
         if (thirdPersonController.armState != ThirdPersonController.ArmState.Equip ||
             stunned == true)
@@ -112,15 +158,97 @@ public class PlayerAttackController : MonoBehaviour
         return true;
     }
     
+    //获取玩家武器装备输入
+    public void GetKatanaInput(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started && !stunned)
+        {
+            if (weaponType != WeaponType.Katana)
+            {
+                weaponType = WeaponType.Katana;
+                thirdPersonController.isEquip = true;
+                //将当前有效的IK约束设置为Katana的IK约束
+                currentRightHandIKConstraint = rightHandIKConstraints[(int)WeaponType.Katana];
+                currentLeftHandIKConstraint = leftHandIKConstraints[(int)WeaponType.Katana];
+            }
+            else
+            {
+                weaponType = WeaponType.Empty;
+                thirdPersonController.isEquip = false;
+            }
+        }
+        Debug.Log((int)weaponType);
+    }
+    public void GetGreatSwordInput(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started && !stunned)
+        {
+            if (weaponType != WeaponType.GreatSword)
+            {
+                weaponType = WeaponType.GreatSword;
+                thirdPersonController.isEquip = true;
+                //将当前有效的IK约束设置为GreatSword的IK约束
+                currentRightHandIKConstraint = rightHandIKConstraints[(int)WeaponType.GreatSword];
+                currentLeftHandIKConstraint = leftHandIKConstraints[(int)WeaponType.GreatSword];
+            }
+            else
+            {
+                weaponType = WeaponType.Empty;
+                thirdPersonController.isEquip = false;
+            }
+        }
+        Debug.Log((int)weaponType);
+    }
+    public void GetBowInput(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started && !stunned)
+        {
+            if (weaponType != WeaponType.Bow)
+            {
+                weaponType = WeaponType.Bow;
+                thirdPersonController.isEquip = true;
+                //将当前有效的IK约束设置为Bow的IK约束
+                currentRightHandIKConstraint = rightHandIKConstraints[(int)WeaponType.Bow];
+                currentLeftHandIKConstraint = leftHandIKConstraints[(int)WeaponType.Bow];
+            }
+            else
+            {
+                weaponType = WeaponType.Empty;
+                thirdPersonController.isEquip = false;
+            }
+        }
+        Debug.Log((int)weaponType);
+    }
+    
     //获取玩家攻击输入
     public void GetAttackInput(InputAction.CallbackContext ctx)
     {
-        if (ctx.started && IsAttackValid())
+        if (ctx.started && IsInputValid())
         {
             //改变连击数，若连击数此时为4则会重置为1
             attackCount = attackCount < 4 ? attackCount + 1 : 1;
             //阻断攻击输入的接受
             stunned = true;
+        }
+    }
+    
+    //获取玩家闪避输入
+    public void GetSlideInput(InputAction.CallbackContext ctx)
+    {
+        if (ctx.interaction is TapInteraction && IsInputValid())
+        {
+            animator.SetTrigger("Roll");
+        }
+    }
+
+    public void StopTime(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started)
+        {
+            if(Time.timeScale == 0f)
+                Time.timeScale = 1f;
+            else if(Time.timeScale == 1f)
+                Time.timeScale = 0f;
         }
     }
     

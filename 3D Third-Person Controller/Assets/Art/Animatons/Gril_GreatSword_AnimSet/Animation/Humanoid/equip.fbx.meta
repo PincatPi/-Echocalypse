@@ -529,9 +529,10 @@ ModelImporter:
       - time: 0.44485033
         functionName: PutGrabWeapon
         data: 
-        objectReferenceParameter: {instanceID: 0}
+        objectReferenceParameter: {fileID: 11500000, guid: f3a164cd0abeba64584e4c0dc6fc8b10,
+          type: 3}
         floatParameter: 0
-        intParameter: 1
+        intParameter: 2
         messageOptions: 0
       - time: 0.5328222
         functionName: PlayEquipSound

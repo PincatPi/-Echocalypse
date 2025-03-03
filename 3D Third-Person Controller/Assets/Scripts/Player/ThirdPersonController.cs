@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
 using UnityEngine.Animations.Rigging;
+using UnityEngine.InputSystem.Interactions;
+using UnityEngine.Serialization;
 
 public class ThirdPersonController : MonoBehaviour
 {
@@ -58,6 +60,7 @@ public class ThirdPersonController : MonoBehaviour
     {
         Normal = 0,
         Equip = 1,
+        Aim = 2
     }
     [HideInInspector]
     public ArmState armState = ArmState.Normal;
@@ -65,7 +68,8 @@ public class ThirdPersonController : MonoBehaviour
     public GameObject weaponOnBack;
     public GameObject weaponInHand;
     
-    public TwoBoneIKConstraint rightHandIKConstraint;
+    //TODO:检查此处修改
+    // public TwoBoneIKConstraint rightHandIKConstraint;
     
     #endregion
     
@@ -91,7 +95,10 @@ public class ThirdPersonController : MonoBehaviour
     //角色状态输入
     private bool isRunPressed = false;
     private bool isCrouchPressed = false;
-    private bool isEquipPressed = false;
+    [FormerlySerializedAs("isEquipPressed")] public bool isEquip = false;
+    private bool isKatana = false;
+    private bool isGrateSword = false;
+    private bool isBow = false;
     private bool isJumpPressed = false;
     
     #endregion
@@ -103,7 +110,7 @@ public class ThirdPersonController : MonoBehaviour
     private int turnSpeedHash;
     private int verticalSpeedHash;
     private int jumpTypeHash;
-    private int equipGSHash;
+    //private int equipHash;
     
     #endregion
     
@@ -162,7 +169,6 @@ public class ThirdPersonController : MonoBehaviour
 
     #endregion
     
-    
     void Start()
     {
         playerTransform = this.transform;
@@ -177,7 +183,8 @@ public class ThirdPersonController : MonoBehaviour
         turnSpeedHash = Animator.StringToHash("TurnSpeed");
         verticalSpeedHash = Animator.StringToHash("VerticalSpeed");
         jumpTypeHash = Animator.StringToHash("JumpType");
-        equipGSHash = Animator.StringToHash("GSEquip");
+        //TODO: 检查此处是否存在问题
+        // equipHash = Animator.StringToHash("WeaponType");
         
         //锁定鼠标
         Cursor.lockState = CursorLockMode.Locked;
@@ -287,13 +294,14 @@ public class ThirdPersonController : MonoBehaviour
         }
         
         //装备状态
-        if (!isEquipPressed)
+        if (!isEquip)
         {
             armState = ArmState.Normal;
         }
         else
         {
-            armState = ArmState.Equip;
+            if (isEquip)
+                armState = ArmState.Equip;
         }
         
         //玩家输入
@@ -355,10 +363,11 @@ public class ThirdPersonController : MonoBehaviour
     /// </summary>
     private void SetupAnimator()
     {
-        //装备状态
-        animator.SetBool(equipGSHash, isEquipPressed);
-        //控制掏出武器和收起武器时的右手IK权重
-        rightHandIKConstraint.weight = animator.GetFloat("Right Hand Weight");
+        //TODO: 检查此处修改是否存在问题
+        // //装备状态
+        // animator.SetInteger(equipHash, );
+        // //控制掏出武器和收起武器时的右手IK权重
+        // rightHandIKConstraint.weight = animator.GetFloat("Right Hand Weight");
         
         //站立状态
         if (playerPosture == PlayerPosture.Stand)
@@ -615,16 +624,17 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
+    //TODO:检查此方法删除后是否有影响
     /// <summary>
     /// 切换背部武器和手部武器的显示
     /// </summary>
     /// <param name="weaponPosition">表示武器的位置是在背上0还是手上1</param>
-    public void PutGrabWeapon(int weaponPosition)
-    {
-        bool onBack = (weaponPosition != (int)ArmState.Equip);
-        weaponOnBack.SetActive(onBack);
-        weaponInHand.SetActive(!onBack);
-    }
+    // public void PutGrabWeapon(int weaponPosition)
+    // {
+    //     bool onBack = (weaponPosition != (int)ArmState.Equip);
+    //     weaponOnBack.SetActive(onBack);
+    //     weaponInHand.SetActive(!onBack);
+    // }
 
     /// <summary>
     /// 没有装备武器时，奔跑下的急停
@@ -648,10 +658,12 @@ public class ThirdPersonController : MonoBehaviour
             //根据动画此时迈的是哪只脚来播放不同脚的急停动画
             if (currentFootCycle >= 0f && currentFootCycle < 0.5f)
             {
+                //TODO: 急停动画的过渡需要优化
                 animator.CrossFade("NormalStopRight", 0.1f);
             }
             else if (currentFootCycle >= 0.5f && currentFootCycle < 1f)
             {
+                //TODO: 急停动画的过渡需要优化
                 animator.CrossFade("NormalStopLeft", 0.1f);
             }
             canStop = false;
@@ -665,10 +677,17 @@ public class ThirdPersonController : MonoBehaviour
     {
         moveInput = ctx.ReadValue<Vector2>();
     }
-    //获取玩家奔跑状态输入
+    //获取玩家奔跑状态和空手状态下闪避的输入
     public void GetRunInput(InputAction.CallbackContext ctx)
     {
-        isRunPressed = ctx.ReadValueAsButton();
+        if(ctx.interaction is HoldInteraction)
+            isRunPressed = ctx.ReadValueAsButton();
+        else if (ctx.interaction is TapInteraction)
+        {
+            //在地面上 且 处于空手状态下
+            if(isGrounded && armState == ArmState.Normal)
+                animator.SetTrigger("Roll"); 
+        }
     }
     //获取玩家下蹲状态输入
     public void GetCrouchInput(InputAction.CallbackContext ctx)
@@ -679,11 +698,12 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
     //获取玩家装备武器状态输入
+    //TODO: 该方法有待移除
     public void GetEquipInput(InputAction.CallbackContext ctx)
     {
         if (ctx.started)
         {
-            isEquipPressed = !isEquipPressed;
+            //isEquipPressed = !isEquipPressed;
         }
     }
     //获取玩家跳跃输入

@@ -33,18 +33,54 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Run",
+                    "name": "Run/Slide",
                     "type": "Button",
                     "id": "3391dc79-c93d-48ff-a805-94fdd7a2f9ef",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "",
+                    "interactions": "Hold(duration=1),Tap",
                     "initialStateCheck": false
                 },
                 {
                     "name": "Jump",
                     "type": "Button",
                     "id": "eea60ae3-aa44-4348-a851-ac31782362bf",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "KatanaEquip",
+                    "type": "Button",
+                    "id": "d7dbc4a6-af75-4267-88e9-e0f325b61376",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "GSEquip",
+                    "type": "Button",
+                    "id": "1d4ebc8f-ceeb-4a01-8a06-1b93cb518f69",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "BowEquip",
+                    "type": "Button",
+                    "id": "9fb176fa-35df-40a8-b3fa-069ee25a8244",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Attack",
+                    "type": "Button",
+                    "id": "d05e86d9-43df-4acf-a9e1-5e3345cd9cd1",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -69,18 +105,9 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Equip",
+                    "name": "StopTime",
                     "type": "Button",
-                    "id": "1d4ebc8f-ceeb-4a01-8a06-1b93cb518f69",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Attack",
-                    "type": "Button",
-                    "id": "d05e86d9-43df-4acf-a9e1-5e3345cd9cd1",
+                    "id": "8c82735a-63fa-4f0b-bb5c-17e2021e0a3a",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -172,7 +199,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
-                    "action": "Run",
+                    "action": "Run/Slide",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -189,34 +216,12 @@
                 },
                 {
                     "name": "",
-                    "id": "6de7560d-fde1-479f-898c-cfc7682b6bf6",
-                    "path": "<Keyboard>/1",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Greet",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "0f038da3-52f3-4cac-8585-b82b3c76036d",
+                    "id": "47c81b78-e897-4c40-80fe-e660dcb8bd54",
                     "path": "<Keyboard>/2",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
-                    "action": "Agree",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "47c81b78-e897-4c40-80fe-e660dcb8bd54",
-                    "path": "<Keyboard>/q",
-                    "interactions": "",
-                    "processors": "",
                     "groups": "Keyboard&Mouse",
-                    "action": "Equip",
+                    "action": "GSEquip",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -228,6 +233,61 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6de7560d-fde1-479f-898c-cfc7682b6bf6",
+                    "path": "<Keyboard>/f1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Greet",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0f038da3-52f3-4cac-8585-b82b3c76036d",
+                    "path": "<Keyboard>/f2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Agree",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fc607a2e-920d-4757-a6e2-75320a21aed4",
+                    "path": "<Keyboard>/1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "KatanaEquip",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f3aaa056-89b9-4e23-ba88-7b0b68389c76",
+                    "path": "<Keyboard>/3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "BowEquip",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7cc887b8-7bd0-4bfe-b998-18755f8231eb",
+                    "path": "<Keyboard>/backquote",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "StopTime",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

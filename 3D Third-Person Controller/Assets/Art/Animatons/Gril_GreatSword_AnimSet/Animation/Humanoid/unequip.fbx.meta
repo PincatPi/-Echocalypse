@@ -536,9 +536,10 @@ ModelImporter:
       - time: 0.65755
         functionName: PutGrabWeapon
         data: 
-        objectReferenceParameter: {instanceID: 0}
+        objectReferenceParameter: {fileID: 11500000, guid: f3a164cd0abeba64584e4c0dc6fc8b10,
+          type: 3}
         floatParameter: 0
-        intParameter: 0
+        intParameter: 2
         messageOptions: 0
       transformMask: []
       maskType: 3
