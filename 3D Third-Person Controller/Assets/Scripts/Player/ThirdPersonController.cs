@@ -59,8 +59,7 @@ public class ThirdPersonController : MonoBehaviour
     public enum ArmState
     {
         Normal = 0,
-        Equip = 1,
-        Aim = 2
+        Equip = 1
     }
     [HideInInspector]
     public ArmState armState = ArmState.Normal;

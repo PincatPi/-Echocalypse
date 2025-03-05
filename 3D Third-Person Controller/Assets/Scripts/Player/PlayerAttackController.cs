@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst.Intrinsics;
@@ -20,6 +21,7 @@ public class PlayerAttackController : MonoBehaviour
     private TwoBoneIKConstraint currentRightHandIKConstraint;
     public TwoBoneIKConstraint[] leftHandIKConstraints;
     private TwoBoneIKConstraint currentLeftHandIKConstraint;
+    public Camera mainCamera;
     
     #endregion
 
@@ -44,6 +46,9 @@ public class PlayerAttackController : MonoBehaviour
     [SerializeField]
     private int attackCount = 0;
 
+    //锁定敌人目标
+    [SerializeField]private bool isLockTarget = false;
+    
     private readonly float attackTime = 0.4f;
     [SerializeField]
     private float timeCounter = 0f;
@@ -52,6 +57,17 @@ public class PlayerAttackController : MonoBehaviour
     
     public GameObject[] weaponOnBack;
     public GameObject[] weaponInHand;
+    
+    //玩家面前一定距离内的敌人数组
+    private Collider[] enemies;
+    [SerializeField]
+    private Transform targetTransform;
+    //能够发现敌人的最远视线距离
+    public float frustumDistance = 100f;
+    [SerializeField] private Vector3 offset;
+    [SerializeField] private Vector3 size;
+    [SerializeField] private Vector3 cubeCenter;
+    [SerializeField] private Vector3 rotateEuler;
 
     private int equipHash;
     
@@ -80,6 +96,9 @@ public class PlayerAttackController : MonoBehaviour
         SetAnimator();
         //攻击计数
         CommonAttack();
+        
+        FindEnemyInFront();
+        LockOnEnemy();
     }
 
     private void SetAnimator()
@@ -89,18 +108,6 @@ public class PlayerAttackController : MonoBehaviour
         //控制掏出武器和收起武器时的右手IK权重
         currentRightHandIKConstraint.weight = animator.GetFloat("Right Hand Weight");
         currentLeftHandIKConstraint.weight = animator.GetFloat("Left Hand Weight");
-    }
-    
-    /// <summary>
-    /// 切换背部武器和手部武器的显示
-    /// </summary>
-    /// <param name="weaponType">表示武器的位置是在背上0还是手上1\2\3</param>
-    public void PutGrabWeapon(int weaponType)
-    {
-        //isOnBack为true时是装备武器，为false时是收回武器
-        bool isOnBack = weaponOnBack[weaponType].activeSelf;
-        weaponOnBack[weaponType].SetActive(!isOnBack);
-        weaponInHand[weaponType].SetActive(isOnBack);
     }
     
     /// <summary>
@@ -115,7 +122,83 @@ public class PlayerAttackController : MonoBehaviour
         
         animator.SetFloat("AttackCount", attackCount, 0.1f, Time.deltaTime);
     }
+    
+    /// <summary>
+    /// 查找玩家面前一定距离内的敌人
+    /// </summary>
+    private void FindEnemyInFront()
+    {
+        Vector3 cameraPos = mainCamera.transform.position;
+        Vector3 cameraForward = mainCamera.transform.forward;
+        cubeCenter = new Vector3(offset.x * cameraForward.x, offset.y * cameraForward.y, offset.z * cameraForward.z)+ cameraPos;
+        enemies = Physics.OverlapBox(cubeCenter, size / 2, Quaternion.Euler(rotateEuler), 1 << LayerMask.NameToLayer("Enemy"));
+        if (enemies.Length > 0)
+        {
+            //找到所有enemies中距离玩家最近的
+            float minDistance = float.MaxValue;
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                float distance = Vector3.Distance(this.transform.position, enemies[i].transform.position);
+                if (distance < minDistance && IsVisableInCamera(enemies[i].transform))
+                {
+                    minDistance = distance;
+                    targetTransform = enemies[i].transform;
+                }
+            }
+        }
+        else
+        {
+            targetTransform = null;
+        }
+    }
+    
+    /// <summary>
+    /// 判断物体是否在相机中可见
+    /// </summary>
+    /// <param name="transform"></param>
+    /// <returns></returns>
+    private bool IsVisableInCamera(Transform transform)
+    {
+        //转化为相机坐标
+        Vector3 viewPos = mainCamera.WorldToViewportPoint(transform.position);
+        //若该物体在相机的背后
+        if(viewPos.z < 0)
+            return false;
+        //若该物体超出了相机的裁切面
+        if(viewPos.z > mainCamera.farClipPlane)
+            return false;
+        //物体在相机视角范围之外
+        if(viewPos.x < 0 || viewPos.x > 1 || viewPos.y < 0 || viewPos.y > 1)
+            return false;
+        return true;
+    }
+    
+    //绘制玩家视线范围
+    private void OnDrawGizmos()
+    {
+        Vector3 cameraPos = mainCamera.transform.position;
+        Vector3 cameraForward = mainCamera.transform.forward;
+        cubeCenter = new Vector3(offset.x * cameraForward.x, offset.y * cameraForward.y, offset.z * cameraForward.z)+ cameraPos;
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(cubeCenter, size);
+    }
 
+    /// <summary>
+    /// 锁定状态下的攻击，令玩家对象始终面朝敌人对象
+    /// </summary>
+    private void LockOnEnemy()
+    {
+        if (!isLockTarget || !targetTransform)
+            return;
+        //目标旋转
+        Quaternion targetRotation = Quaternion.LookRotation(targetTransform.position - transform.position);
+        //当前旋转
+        Quaternion currentRotation = transform.rotation;
+        //对旋转进行平滑插值
+        transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, Time.deltaTime * 10f);
+        transform.eulerAngles = new Vector3(0, transform.eulerAngles.y, 0);
+    }
+    
     #region 动画片段调用函数
     
     /// <summary>
@@ -147,6 +230,18 @@ public class PlayerAttackController : MonoBehaviour
 
         effect.GetComponent<ParticleSystem>().Play();
         Destroy(effect, 1f);
+    }
+    
+    /// <summary>
+    /// 切换背部武器和手部武器的显示
+    /// </summary>
+    /// <param name="weaponType">表示武器的位置是在背上0还是手上1\2\3</param>
+    public void PutGrabWeapon(int weaponType)
+    {
+        //isOnBack为true时是装备武器，为false时是收回武器
+        bool isOnBack = weaponOnBack[weaponType].activeSelf;
+        weaponOnBack[weaponType].SetActive(!isOnBack);
+        weaponInHand[weaponType].SetActive(isOnBack);
     }
     
     #endregion
@@ -246,6 +341,14 @@ public class PlayerAttackController : MonoBehaviour
         }
     }
 
+    //获取锁定敌人输入
+    public void GetLockTargetInput(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started)
+            isLockTarget = !isLockTarget;
+    }
+    
+    //TEST: 暂停时间（调试用，发布时删除）
     public void StopTime(InputAction.CallbackContext ctx)
     {
         if (ctx.started)
