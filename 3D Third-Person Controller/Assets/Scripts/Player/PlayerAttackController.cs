@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cinemachine;
 using Unity.Burst.Intrinsics;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -22,6 +23,7 @@ public class PlayerAttackController : MonoBehaviour
     public TwoBoneIKConstraint[] leftHandIKConstraints;
     private TwoBoneIKConstraint currentLeftHandIKConstraint;
     public Camera mainCamera;
+    public CinemachineTargetGroup cinemachineTargetGroup;
     
     #endregion
 
@@ -60,16 +62,17 @@ public class PlayerAttackController : MonoBehaviour
     
     //玩家面前一定距离内的敌人数组
     private Collider[] enemies;
-    [SerializeField]
-    private Transform targetTransform;
+    [SerializeField] private Transform targetTransform = null;
+    //[SerializeField] private Transform lastTargetTransform = null;
     //能够发现敌人的最远视线距离
-    public float frustumDistance = 100f;
+    [SerializeField] private float distance = 30f;
     [SerializeField] private Vector3 offset;
     [SerializeField] private Vector3 size;
     [SerializeField] private Vector3 cubeCenter;
     [SerializeField] private Vector3 rotateEuler;
 
     private int equipHash;
+    private int lockOnHash;
     
     void Start()
     {
@@ -80,6 +83,7 @@ public class PlayerAttackController : MonoBehaviour
         currentLeftHandIKConstraint = leftHandIKConstraints[0];
         
         equipHash = Animator.StringToHash("WeaponType");
+        lockOnHash = Animator.StringToHash("LockOn");
         
         //注册当前各种武器对应的Combo数
         comboDic.Add(WeaponType.Katana, 6);
@@ -96,7 +100,10 @@ public class PlayerAttackController : MonoBehaviour
         SetAnimator();
         //攻击计数
         CommonAttack();
-        
+    }
+
+    void LateUpdate()
+    {
         FindEnemyInFront();
         LockOnEnemy();
     }
@@ -128,52 +135,89 @@ public class PlayerAttackController : MonoBehaviour
     /// </summary>
     private void FindEnemyInFront()
     {
+        //若不处在锁定状态，则不进行查找
+        if (!isLockTarget)
+            return;
+        
+        //检测相机面前的盒形碰撞体内是否有Enemy
         Vector3 cameraPos = mainCamera.transform.position;
         Vector3 cameraForward = mainCamera.transform.forward;
         cubeCenter = new Vector3(offset.x * cameraForward.x, offset.y * cameraForward.y, offset.z * cameraForward.z)+ cameraPos;
         enemies = Physics.OverlapBox(cubeCenter, size / 2, Quaternion.Euler(rotateEuler), 1 << LayerMask.NameToLayer("Enemy"));
+        
+        float minDistance = float.MaxValue;
         if (enemies.Length > 0)
         {
             //找到所有enemies中距离玩家最近的
-            float minDistance = float.MaxValue;
             for (int i = 0; i < enemies.Length; i++)
             {
                 float distance = Vector3.Distance(this.transform.position, enemies[i].transform.position);
-                if (distance < minDistance && IsVisableInCamera(enemies[i].transform))
+                //若该敌人与玩家间的距离小于最小距离，且能够在摄像机中被看到
+                if (distance < minDistance && IsVisableInCamera(mainCamera, enemies[i].transform))
                 {
                     minDistance = distance;
                     targetTransform = enemies[i].transform;
                 }
             }
+            //若找到了这样的对象
+            if (!Mathf.Approximately(minDistance, float.MaxValue) && targetTransform)
+            {
+                //将该对象添加到虚拟相机的targetGroup中
+                //cinemachineTargetGroup每时刻最多应该只有2个对象（m_Targets[0]固定为玩家对象，m_Targets[1]为敌人对象）
+                if (cinemachineTargetGroup.m_Targets.Length == 1)
+                {
+                    cinemachineTargetGroup.AddMember(targetTransform, 1, 1);
+                }
+                else if(cinemachineTargetGroup.m_Targets.Length == 2)
+                {
+                    CinemachineTargetGroup.Target newTarget = new CinemachineTargetGroup.Target
+                    {
+                        target = targetTransform, weight = 1f, radius = 1f
+                    };
+                    cinemachineTargetGroup.m_Targets[1] = newTarget;
+                }
+                cinemachineTargetGroup.DoUpdate();   
+            }
         }
-        else
+        //如果检测区内没有敌人 || 没有敌人是可以被相机看见的
+        if(enemies.Length == 0 || !targetTransform || Mathf.Approximately(minDistance, float.MaxValue))
         {
-            targetTransform = null;
+            targetTransform = null; //目标对象置为空
+            if (cinemachineTargetGroup.m_Targets.Length > 1)
+            {
+                cinemachineTargetGroup.m_Targets[1] = new CinemachineTargetGroup.Target();   
+            }
+            cinemachineTargetGroup.DoUpdate(); //更新
         }
     }
     
     /// <summary>
     /// 判断物体是否在相机中可见
     /// </summary>
-    /// <param name="transform"></param>
+    /// <param name="camera"></param>
+    /// <param name="target"></param>
     /// <returns></returns>
-    private bool IsVisableInCamera(Transform transform)
+    private bool IsVisableInCamera(Camera camera, Transform target)
     {
-        //转化为相机坐标
-        Vector3 viewPos = mainCamera.WorldToViewportPoint(transform.position);
-        //若该物体在相机的背后
-        if(viewPos.z < 0)
+        if (camera == null || target == null)
             return false;
-        //若该物体超出了相机的裁切面
-        if(viewPos.z > mainCamera.farClipPlane)
+        //将目标物体坐标转为屏幕坐标
+        Vector3 screenPoint = camera.WorldToScreenPoint(target.position);
+        //该物体坐标在屏幕外
+        if(screenPoint.x < 0 || screenPoint.y < 0 || screenPoint.x > Screen.width || screenPoint.y > Screen.height)
             return false;
-        //物体在相机视角范围之外
-        if(viewPos.x < 0 || viewPos.x > 1 || viewPos.y < 0 || viewPos.y > 1)
-            return false;
-        return true;
+        //从摄像机向目标物体发射射线
+        Ray ray = camera.ScreenPointToRay(screenPoint);
+        RaycastHit hit;
+        //忽略检测Player层
+        if (Physics.Raycast(ray, out hit, distance, ~(1 << LayerMask.NameToLayer("Player"))))
+        {
+            return hit.collider.gameObject == target.gameObject;
+        }
+        return false;
     }
     
-    //绘制玩家视线范围
+    //TEST: 绘制玩家视线范围
     private void OnDrawGizmos()
     {
         Vector3 cameraPos = mainCamera.transform.position;
@@ -184,12 +228,21 @@ public class PlayerAttackController : MonoBehaviour
     }
 
     /// <summary>
-    /// 锁定状态下的攻击，令玩家对象始终面朝敌人对象
+    /// //TODO: 锁定状态下的攻击，令玩家对象始终面朝敌人对象
     /// </summary>
     private void LockOnEnemy()
     {
+        //若不处在锁定状态 || 找不到可以锁定的目标
         if (!isLockTarget || !targetTransform)
-            return;
+        {
+            //切换为NormalCamera
+            animator.SetBool(lockOnHash, false);
+            targetTransform = null; //锁定目标置空（针对不处在锁定状态）
+            isLockTarget = false; //退出锁定状态（针对找不到可以锁定的目标）
+            return;   
+        }
+        //设状态为LockOn，切换至LockOnCamera
+        animator.SetBool(lockOnHash, true);
         //目标旋转
         Quaternion targetRotation = Quaternion.LookRotation(targetTransform.position - transform.position);
         //当前旋转

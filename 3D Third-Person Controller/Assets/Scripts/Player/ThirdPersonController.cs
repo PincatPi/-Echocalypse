@@ -623,18 +623,6 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
-    //TODO:检查此方法删除后是否有影响
-    /// <summary>
-    /// 切换背部武器和手部武器的显示
-    /// </summary>
-    /// <param name="weaponPosition">表示武器的位置是在背上0还是手上1</param>
-    // public void PutGrabWeapon(int weaponPosition)
-    // {
-    //     bool onBack = (weaponPosition != (int)ArmState.Equip);
-    //     weaponOnBack.SetActive(onBack);
-    //     weaponInHand.SetActive(!onBack);
-    // }
-
     /// <summary>
     /// 没有装备武器时，奔跑下的急停
     /// </summary>
@@ -658,12 +646,14 @@ public class ThirdPersonController : MonoBehaviour
             if (currentFootCycle >= 0f && currentFootCycle < 0.5f)
             {
                 //TODO: 急停动画的过渡需要优化
-                animator.CrossFade("NormalStopRight", 0.1f);
+                //animator.CrossFade("NormalStopRight", 0.25f);
+                animator.SetTrigger("StopRight");
             }
             else if (currentFootCycle >= 0.5f && currentFootCycle < 1f)
             {
                 //TODO: 急停动画的过渡需要优化
-                animator.CrossFade("NormalStopLeft", 0.1f);
+                //animator.CrossFade("NormalStopLeft", 0.25f);
+                animator.SetTrigger("StopLeft");
             }
             canStop = false;
         }
