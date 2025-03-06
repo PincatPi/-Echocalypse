@@ -9,6 +9,7 @@ using UnityEngine.Animations.Rigging;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Interactions;
 using UnityEngine.PlayerLoop;
+using UnityEngine.UIElements;
 
 public class PlayerAttackController : MonoBehaviour
 {
@@ -70,6 +71,9 @@ public class PlayerAttackController : MonoBehaviour
     [SerializeField] private Vector3 size;
     [SerializeField] private Vector3 cubeCenter;
     [SerializeField] private Vector3 rotateEuler;
+    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private LayerMask playerLayer;
+    [SerializeField] private LayerMask playerSubLayer;
 
     private int equipHash;
     private int lockOnHash;
@@ -143,7 +147,7 @@ public class PlayerAttackController : MonoBehaviour
         Vector3 cameraPos = mainCamera.transform.position;
         Vector3 cameraForward = mainCamera.transform.forward;
         cubeCenter = new Vector3(offset.x * cameraForward.x, offset.y * cameraForward.y, offset.z * cameraForward.z)+ cameraPos;
-        enemies = Physics.OverlapBox(cubeCenter, size / 2, Quaternion.Euler(rotateEuler), 1 << LayerMask.NameToLayer("Enemy"));
+        enemies = Physics.OverlapBox(cubeCenter, size / 2, Quaternion.Euler(rotateEuler), enemyLayer);
         
         float minDistance = float.MaxValue;
         if (enemies.Length > 0)
@@ -157,6 +161,7 @@ public class PlayerAttackController : MonoBehaviour
                 {
                     minDistance = distance;
                     targetTransform = enemies[i].transform;
+                    Debug.Log(enemies[i].name);
                 }
             }
             //若找到了这样的对象
@@ -199,7 +204,7 @@ public class PlayerAttackController : MonoBehaviour
     /// <returns></returns>
     private bool IsVisableInCamera(Camera camera, Transform target)
     {
-        if (camera == null || target == null)
+        if (!camera || !target)
             return false;
         //将目标物体坐标转为屏幕坐标
         Vector3 screenPoint = camera.WorldToScreenPoint(target.position);
@@ -208,9 +213,8 @@ public class PlayerAttackController : MonoBehaviour
             return false;
         //从摄像机向目标物体发射射线
         Ray ray = camera.ScreenPointToRay(screenPoint);
-        RaycastHit hit;
-        //忽略检测Player层
-        if (Physics.Raycast(ray, out hit, distance, ~(1 << LayerMask.NameToLayer("Player"))))
+        //忽略检测Player和Player下子物体层
+        if (Physics.Raycast(ray, out RaycastHit hit, distance, ~(playerLayer | playerSubLayer)))
         {
             return hit.collider.gameObject == target.gameObject;
         }
@@ -225,6 +229,17 @@ public class PlayerAttackController : MonoBehaviour
         cubeCenter = new Vector3(offset.x * cameraForward.x, offset.y * cameraForward.y, offset.z * cameraForward.z)+ cameraPos;
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(cubeCenter, size);
+    }
+    private void DrawRay()
+    {
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            Transform target = enemies[i].transform;
+            
+            Vector3 screenPoint = mainCamera.WorldToScreenPoint(target.position);
+            Ray ray = mainCamera.ScreenPointToRay(screenPoint);
+            Gizmos.DrawRay(ray.origin, ray.direction * distance);   
+        }
     }
 
     /// <summary>
