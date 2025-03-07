@@ -25,10 +25,13 @@ public class EnemyBase : MonoBehaviour
     
     //巡逻
     public Transform[] patrolPoints;
+    
+    //组件
+    protected Animator animator;
 
     //敌人公共方法
     //受到攻击
-    public virtual void TakeDamage() { }
+    public virtual void TakeDamage(GameObject other) { }
     
     //死亡
     public virtual void OnDeath() { }
@@ -49,7 +52,7 @@ public class EnemyBase : MonoBehaviour
             if (IsInView(targets[0].transform))
             {
                 //检测玩家是否在该对象面前一定角度的范围内
-                if (Vector3.Dot(((targets[0].transform.position + new Vector3(0, 1f, 0)) - transform.root.position).normalized,
+                if (Vector3.Dot(((targets[0].transform.position + new Vector3(0, 1f, 0)) - (transform.root.position + new Vector3(0, 1.2f, 0))).normalized,
                         transform.root.forward) > Mathf.Cos(Mathf.Deg2Rad * detectAngle / 2))
                 {
                     currentTarget = targets[0].transform;

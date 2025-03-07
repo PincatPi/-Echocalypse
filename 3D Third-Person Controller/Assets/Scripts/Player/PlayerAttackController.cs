@@ -25,27 +25,28 @@ public class PlayerAttackController : MonoBehaviour
     private TwoBoneIKConstraint currentLeftHandIKConstraint;
     public Camera mainCamera;
     public CinemachineTargetGroup cinemachineTargetGroup;
+    private AttackCheckGizmos attackCheck;
     
     #endregion
 
     public GameObject[] attackEffects;
     public int attack = 100;
-    public enum AttackType
+    public enum E_AttackType
     {
         Common,
         Skill,
         Ultimate,
     }
-    private AttackType attackType = AttackType.Common;
-    public enum WeaponType
+    private E_AttackType attackType = E_AttackType.Common;
+    public enum E_WeaponType
     {
         Empty,
         Katana,
         GreatSword,
         Bow
     }
-    private WeaponType weaponType = WeaponType.Empty;
-    private Dictionary<WeaponType, int> comboDic = new Dictionary<WeaponType, int>();
+    private E_WeaponType weaponType = E_WeaponType.Empty;
+    private Dictionary<E_WeaponType, int> comboDic = new Dictionary<E_WeaponType, int>();
     [SerializeField]
     private int attackCount = 0;
 
@@ -85,13 +86,14 @@ public class PlayerAttackController : MonoBehaviour
         thirdPersonController = GetComponent<ThirdPersonController>();
         currentRightHandIKConstraint = rightHandIKConstraints[0];
         currentLeftHandIKConstraint = leftHandIKConstraints[0];
+        attackCheck = GetComponent<AttackCheckGizmos>();
         
         equipHash = Animator.StringToHash("WeaponType");
         lockOnHash = Animator.StringToHash("LockOn");
         
         //注册当前各种武器对应的Combo数
-        comboDic.Add(WeaponType.Katana, 6);
-        comboDic.Add(WeaponType.GreatSword, 4);
+        comboDic.Add(E_WeaponType.Katana, 6);
+        comboDic.Add(E_WeaponType.GreatSword, 4);
     }
     
     void Update()
@@ -156,12 +158,13 @@ public class PlayerAttackController : MonoBehaviour
             for (int i = 0; i < enemies.Length; i++)
             {
                 float distance = Vector3.Distance(this.transform.position, enemies[i].transform.position);
+                //TEST:
+                Debug.Log("distance: " + distance);
                 //若该敌人与玩家间的距离小于最小距离，且能够在摄像机中被看到
                 if (distance < minDistance && IsVisableInCamera(mainCamera, enemies[i].transform))
                 {
                     minDistance = distance;
                     targetTransform = enemies[i].transform;
-                    Debug.Log(enemies[i].name);
                 }
             }
             //若找到了这样的对象
@@ -333,58 +336,61 @@ public class PlayerAttackController : MonoBehaviour
         if (ctx.started && !stunned)
         {
             //若当前手上没有武器
-            if (weaponType == WeaponType.Empty)
+            if (weaponType == E_WeaponType.Empty)
             {
-                weaponType = WeaponType.Katana;
+                weaponType = E_WeaponType.Katana;
                 thirdPersonController.isEquip = true;
                 //将当前有效的IK约束设置为Katana的IK约束
-                currentRightHandIKConstraint = rightHandIKConstraints[(int)WeaponType.Katana];
-                currentLeftHandIKConstraint = leftHandIKConstraints[(int)WeaponType.Katana];
+                currentRightHandIKConstraint = rightHandIKConstraints[(int)E_WeaponType.Katana];
+                currentLeftHandIKConstraint = leftHandIKConstraints[(int)E_WeaponType.Katana];
             }
             //若手上有武器，则收回该武器
             else
             {
-                weaponType = WeaponType.Empty;
+                weaponType = E_WeaponType.Empty;
                 thirdPersonController.isEquip = false;
             }
+            attackCheck.weaponType = weaponType;
         }
     }
     public void GetGreatSwordInput(InputAction.CallbackContext ctx)
     {
         if (ctx.started && !stunned)
         {
-            if (weaponType == WeaponType.Empty)
+            if (weaponType == E_WeaponType.Empty)
             {
-                weaponType = WeaponType.GreatSword;
+                weaponType = E_WeaponType.GreatSword;
                 thirdPersonController.isEquip = true;
                 //将当前有效的IK约束设置为GreatSword的IK约束
-                currentRightHandIKConstraint = rightHandIKConstraints[(int)WeaponType.GreatSword];
-                currentLeftHandIKConstraint = leftHandIKConstraints[(int)WeaponType.GreatSword];
+                currentRightHandIKConstraint = rightHandIKConstraints[(int)E_WeaponType.GreatSword];
+                currentLeftHandIKConstraint = leftHandIKConstraints[(int)E_WeaponType.GreatSword];
             }
             else
             {
-                weaponType = WeaponType.Empty;
+                weaponType = E_WeaponType.Empty;
                 thirdPersonController.isEquip = false;
             }
+            attackCheck.weaponType = weaponType;
         }
     }
     public void GetBowInput(InputAction.CallbackContext ctx)
     {
         if (ctx.started && !stunned)
         {
-            if (weaponType == WeaponType.Empty)
+            if (weaponType == E_WeaponType.Empty)
             {
-                weaponType = WeaponType.Bow;
+                weaponType = E_WeaponType.Bow;
                 thirdPersonController.isEquip = true;
                 //将当前有效的IK约束设置为Bow的IK约束
-                currentRightHandIKConstraint = rightHandIKConstraints[(int)WeaponType.Bow];
-                currentLeftHandIKConstraint = leftHandIKConstraints[(int)WeaponType.Bow];
+                currentRightHandIKConstraint = rightHandIKConstraints[(int)E_WeaponType.Bow];
+                currentLeftHandIKConstraint = leftHandIKConstraints[(int)E_WeaponType.Bow];
             }
             else
             {
-                weaponType = WeaponType.Empty;
+                weaponType = E_WeaponType.Empty;
                 thirdPersonController.isEquip = false;
             }
+            attackCheck.weaponType = weaponType;
         }
     }
     

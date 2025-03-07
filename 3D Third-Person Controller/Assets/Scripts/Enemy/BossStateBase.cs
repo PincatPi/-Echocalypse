@@ -10,7 +10,6 @@ public class BossStateBase : IState
     public void Init(BossFSM bossFSM)
     {
         fsm = bossFSM;
-        boss = bossFSM.parameters;
     }
     public virtual void OnEnter()
     {

@@ -16,13 +16,14 @@ public enum E_BossState
 /// </summary>
 public class BossFSM : EnemyBase
 {
+    private E_BossState currentEnumState;
     private IState currentState;
-    public Boss parameters;
     private Dictionary<E_BossState, IState> stateDic = new Dictionary<E_BossState, IState>();
     
     void Start()
     {
-        parameters = GetComponent<Boss>();
+        animator = GetComponent<Animator>();
+        
         //注册状态
         //获取所有继承自IState的派生类
         var stateTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsSubclassOf(typeof(BossStateBase)));
@@ -72,6 +73,7 @@ public class BossFSM : EnemyBase
             currentState.OnExit();
         //切换新状态
         currentState = stateDic[newState];
+        currentEnumState = newState;
         //执行新状态的进入逻辑
         currentState.OnEnter();
     }
@@ -86,6 +88,27 @@ public class BossFSM : EnemyBase
         //获取状态的名字字符串，并去掉其中的“State”字段
         string stateName = stateType.Name.Replace("State", "");
         return Enum.Parse<E_BossState>(stateName);
+    }
+    
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(detectionCenter.position, detectionRadius);
+
+        if (targets[0] != null)
+        {
+            Gizmos.DrawRay(detectionCenter.position, ((targets[0].transform.root.position + targets[0].transform.root.up * 0f) - detectionCenter.position).normalized);
+            Gizmos.DrawRay(detectionCenter.position, ((targets[0].transform.root.position + targets[0].transform.root.up * 0.5f) - detectionCenter.position).normalized);
+            Gizmos.DrawRay(detectionCenter.position, ((targets[0].transform.root.position + targets[0].transform.root.up * 1f) - detectionCenter.position).normalized);
+            Gizmos.DrawRay(detectionCenter.position, ((targets[0].transform.root.position + targets[0].transform.root.up * 1.5f) - detectionCenter.position).normalized);   
+        }
+    }
+
+    public override void TakeDamage(GameObject other)
+    {
+        Debug.Log(other.name + " hit " + this.name);
+        this.transform.forward = other.transform.position - this.transform.position;
+        animator.SetTrigger("Hit");
     }
 
     #region 重写方法
